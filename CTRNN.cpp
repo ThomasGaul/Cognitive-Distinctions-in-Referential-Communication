@@ -228,29 +228,23 @@ void CTRNN::SetCenterCrossing(void)
 
 #include <iomanip>
 
+// modified to simplify importing into Mathematica
 ostream& operator<<(ostream& os, CTRNN& c)
 {
 	// Set the precision
 	os << setprecision(32);
-	// Write the size
-	os << c.size << endl << endl;
 	// Write the time constants
 	for (int i = 1; i <= c.size; i++)
 		os << c.taus[i] << " ";
-	os << endl << endl;
+	os << endl;
 	// Write the biases
 	for (int i = 1; i <= c.size; i++)
 		os << c.biases[i] << " ";
-	os << endl << endl;
-	// Write the gains
-	for (int i = 1; i <= c.size; i++)
-		os << c.gains[i] << " ";
-	os << endl << endl;
 	// Write the weights
 	for (int i = 1; i <= c.size; i++) {
+		os << endl;
 		for (int j = 1; j <= c.size; j++)
 			os << c.weights[i][j] << " ";
-		os << endl;
 	}
 	// Return the ostream
 	return os;
