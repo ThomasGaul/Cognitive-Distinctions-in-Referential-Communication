@@ -1,4 +1,4 @@
- # Referential Communication About the Identity of Objects
+ # The Communicative Dynamics of Reference
 
 This is a minimal model of referential communication. This repository contains the code for the evolution and analysis of agents in a referential communication task.
 
