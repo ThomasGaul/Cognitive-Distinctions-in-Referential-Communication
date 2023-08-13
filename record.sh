@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # arguments:
-    #-c=circuit_size
-    #-i=population_index
-    #-p=permutation
+    #-c = max posts
+    #-i = population index
+    #-p = permutation
 
 # argumnt handler
 while getopts ":c:i:p:" opt; do
@@ -27,7 +27,7 @@ while getopts ":c:i:p:" opt; do
 done
 
 # compile and run
-make main
-cd "Evo$c""N/Evo-$i"
+cd ./src && make main && cd ../
+cd "EvoP$c/Pop-$i"
 [ ! -d "record" ] && mkdir record
-../../main $p
+../../src/main $c $p
