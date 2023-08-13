@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # arguments:
-    #-c=circuit_size
-    #-i=population_index
+    #-c = max posts
+    #-i = population index
 
 # argument handler
 while getopts ":c:i:" opt; do
@@ -23,10 +23,11 @@ while getopts ":c:i:" opt; do
   esac
 done
 
-# compile and run
-  # comment out make line if running <test.sh>
-#make main
-cd "Evo$c""N/Evo-$i"
+# compile and run (comment out make line if running <test.sh>)
+cd ./src && make main && cd ../
+cd "./EvoP2"
+cd "./Pop-$i"
 [ ! -d "robust" ] && mkdir robust
-../../main r
+# ../../../src/main $c r
+../../src/main $c r
 echo "| Population Index: $i"
