@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # arguments
-  #-c=circuit_size
+  #-c = max posts
 
 # argument handler
 while getopts ":c:" opt; do
@@ -21,8 +21,10 @@ while getopts ":c:" opt; do
 done
 
 # compile and run
-make main
+cd ./src && make main && cd ../
+# directory to batch
+cd ./OldData/EvoP2_6
 for ((i = 1; i <= 32; ++i));
 do
-    ./robust.sh -c$c -i$i
+    ../../robust.sh -c$c -i$i
 done
