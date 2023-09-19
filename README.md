@@ -1,4 +1,4 @@
- # The Communicative Dynamics of Reference
+ # Cognitive Distinctions in Referential Communciation
 
 This is a minimal model of referential communication. This repository contains the code for the evolution and analysis of agents in a referential communication task.
 
