@@ -1,11 +1,11 @@
- # Cognitive Distinctions in Referential Communciation
+ # Cognitive Distinctions in a Model of Referential Communciation
 
-This is a minimal model of referential communication. This repository contains the code for the evolution and analysis (behaviour, parameter space, dynamics) of agents in a referential communication task. As of October 2023, the work has been described in a article submitted to the Artifical Life Journal.
+This is a minimal model of referential communication used to explore the concept of cognitive distinctions. This repository contains the code for the evolution and analysis of agents in a referential communication task. The work has been under review for publication in the *Artificial Life* journal since October 2023. A preprint is available on [my website](https://thomasgaul.github.io/publication/2024-ReferComm).
 
-The environment is a one-dimensional ring with posts that the agents can interact with. The agents are 5-neuron CTRNNs with a body and a single continuous sensor. The task is organised into three phases:
+The environment is a one-dimensional ring with 'post-sets' that agents can interact with. The agents are 5-neuron CTRNNs with a single continuous sensor. The task is organised into three phases:
 
-1. *Transient Phase*. The sender interacts with the target to determine its identity (whether it is 1 or 2 posts).
-2. *Communication Phase*. The sender interacts with the receiver to communicate the identity of the target.
-3. *Search Phase*. The receiver finds and stays near the target, ignoring the other post(s).
+1. *Phase 1*. The sender interacts with the target to differentiate whether it has one or two posts.
+2. *Phase 2*. The sender interacts with the receiver to prepare the latter to find the correct post-set.
+3. *Phase 3*. The receiver finds and stays near the target post-set, ignoring the distraction post-set.
 
-For data, please contact me at tgaul@iu.edu. Please also reach out for any questions or concerns pertaining to the model (or anything else).
+For data, please contact me at tgaul@iu.edu. Please also reach out for any questions or concerns.
