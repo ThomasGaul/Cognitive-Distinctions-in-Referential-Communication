@@ -1,6 +1,6 @@
 //*************************************************************/
 //
-//          The Communicative Dynamics of Reference
+//    Evolving Agents for a Referential Communication Task
 //
 //*************************************************************/
 
@@ -34,9 +34,9 @@ const double BodySize = M_PI*100 / 64.0;                // pi/64
 const int Trials = 5;
 const double SpaceSize = 2*M_PI*100;                    // 2 pi
 const double HalfSpace = SpaceSize*0.5;
-const double TransDuration = 250.0;
-const double CommDuration = 300.0;
-const double SearchDuration = 600.0;
+const double Phase1Duration = 250.0;
+const double Phase2Duration = 300.0;
+const double Phase3Duration = 600.0;
 const double EvalDuration = 250.0;
 const double StepSize = 0.01;
 const double PostSpacing = BodySize*2;                  // space between posts of the same set
@@ -45,12 +45,12 @@ const double NoiseRange = PostSpacing;                  // variation about agent
 
 // Recording Parameters
 const double RecordStep = 0.01;
-const double RobustStep = 0.01;
+const double RobustStep = 0.1;
 const int RobustTrials = 32;
 
 // Evolution Parameters
 const int PopSize = 539;
-    // if using thread search: round( PopSize *(1 - Elite) ) % TRHEAD_COUNT == 0
+    // if using thread Phase3: round( PopSize *(1 - Elite) ) % TRHEAD_COUNT == 0
     // THREAD_COUNT = 64
 const int Gens = 10000;
 const double MutVar = 0.2;
@@ -58,12 +58,12 @@ const double CrossProb = 0.0;
 const double Expected = 1.1;
 const double Elite = 0.05;
 const double BestFitnessThreshold = 0.99;
-const int SearchConstraint = 1;             // 1 is active
+const int Phase3Constraint = 1;             // 1 is active
 const int ReEvalFlag = 1;                   // 1 is active
 const int DisplayToFile = 0;                // 1 is active
 const int WritePopVectInterval = 50;
 
-// EVA Search Vector
+// EVA Phase3 Vector
 const int VectorSize = N*N + 2*N + N;
 
 //-----------------------------------------
@@ -163,11 +163,11 @@ void ParametersToFile (int evol=0) // 1 for evolution parameters
         ofstream para;
         para.open("evol_parameters.dat");
         
-        para << "N,BodySize,SpaceSize,TransDuration,"
-            << "CommDuration,SearchDuration,StepSize,Population,Gen\n";
+        para << "N,BodySize,SpaceSize,Phase1Duration,"
+            << "Phase2Duration,Phase3Duration,StepSize,Population,Gen\n";
         
         para << N << "," << BodySize << "," << SpaceSize << ","
-            << TransDuration << "," << CommDuration << "," << SearchDuration
+            << Phase1Duration << "," << Phase2Duration << "," << Phase3Duration
             << StepSize << "," << PopSize << "," << Gens;
     
         para.close();
@@ -176,11 +176,11 @@ void ParametersToFile (int evol=0) // 1 for evolution parameters
         ofstream para;
         para.open("rec_parameters.dat");
     
-        para << "N,BodySize,SpaceSize,TransDuration,"
-            << "CommDuration,SearchDuration,StepSize\n";
+        para << "N,BodySize,SpaceSize,Phase1Duration,"
+            << "Phase2Duration,Phase3Duration,StepSize\n";
         
         para << N << "," << BodySize << "," << SpaceSize << ","
-            << TransDuration << "," << CommDuration << "," << SearchDuration
+            << Phase1Duration << "," << Phase2Duration << "," << Phase3Duration
             << "," << RecordStep;
 
         para.close();
@@ -240,7 +240,7 @@ double FitnessFunction (TVector<double> &genotype, RandomState &rs)
 
         for (int p = 1; p <= perm; ++p) {
             
-            // Transient Phase
+            // Phase 1
             // update target tag
             if (p > 2)
                 assign = 2;
@@ -252,7 +252,7 @@ double FitnessFunction (TVector<double> &genotype, RandomState &rs)
 
             // initialize sender
             Sender.Reset(Noise(0.0, rs));
-            for (double t = 0.0; t < TransDuration; t += StepSize) {
+            for (double t = 0.0; t < Phase1Duration; t += StepSize) {
 
                 // sense
                 Sender.Sense(MinDistPost(Sender.pos, posts, assign));
@@ -267,10 +267,10 @@ double FitnessFunction (TVector<double> &genotype, RandomState &rs)
             }
             
 
-            // Communication Phase
+            // Phase 2
             // initial receiver
             Receiver.Reset(Noise(Sender.pos + HalfSpace, rs));
-            for (double t = 0.0; t < CommDuration; t += StepSize) {
+            for (double t = 0.0; t < Phase2Duration; t += StepSize) {
 
                 // sense
                 Sender.Sense(Receiver.pos);
@@ -289,7 +289,7 @@ double FitnessFunction (TVector<double> &genotype, RandomState &rs)
                 perf(p) = 0.0; continue;
             }
 
-            // Search Phase
+            // Phase 3
             // alternate position of target
             int assign_pos = (p % 2) + 1;
             posts(1) = (assign_pos * SpaceSize) / 3.0;
@@ -303,7 +303,7 @@ double FitnessFunction (TVector<double> &genotype, RandomState &rs)
             int contact = 0, confuse = 0;                                   // flags to check if receiver "confuses" the posts  
             
             Receiver.SetPosition(Noise(0.0, rs));                           // reposition receiver (but do not reset)
-            for (double t = 0.0; t < SearchDuration; t += StepSize) {
+            for (double t = 0.0; t < Phase3Duration; t += StepSize) {
 
                 // sense
                 Receiver.Sense(MinDistPost(Receiver.pos, posts));
@@ -313,7 +313,7 @@ double FitnessFunction (TVector<double> &genotype, RandomState &rs)
                 
                 double dist = fabs(Receiver.pos - MinDistPost(Receiver.pos,posts,assign));
                 // evaluate distance to target
-                if (t > SearchDuration - EvalDuration) {
+                if (t > Phase3Duration - EvalDuration) {
                     if (dist < CloseEnough)
                         dist = CloseEnough;
                     permdist += dist;
@@ -387,7 +387,7 @@ double P3FitnessFunction (TVector<double> &genotype, RandomState &rs)
             else if ((p-1) && (p-1) % 2 == 0)
                 assign = P_total - assign;
 
-            // Transient Phase
+            // Phase 1
             TVector<double> posts(1,P_total);
             posts.FillContents(0.0);
             posts(1) = HalfSpace;
@@ -396,7 +396,7 @@ double P3FitnessFunction (TVector<double> &genotype, RandomState &rs)
 
             // initialize sender
             Sender.Reset(Noise(0.0, rs));
-            for (double t = 0.0; t < TransDuration; t += StepSize) {
+            for (double t = 0.0; t < Phase1Duration; t += StepSize) {
 
                 // sense
                 Sender.Sense(MinDistPost(Sender.pos, posts, assign));
@@ -411,10 +411,10 @@ double P3FitnessFunction (TVector<double> &genotype, RandomState &rs)
             }
             
 
-            // Communication Phase
+            // Phase 2
             // initial receiver
             Receiver.Reset(Noise(Sender.pos + HalfSpace, rs));
-            for (double t = 0.0; t < CommDuration; t += StepSize) {
+            for (double t = 0.0; t < Phase2Duration; t += StepSize) {
 
                 // sense
                 Sender.Sense(Receiver.pos);
@@ -433,7 +433,7 @@ double P3FitnessFunction (TVector<double> &genotype, RandomState &rs)
                 perf(p) = 0.0; continue;
             }
 
-            // Search Phase
+            // Phase 3
             int assign_pos = (p % 2) + 1;                                   // alternate position of target
             posts(1) = (assign_pos * SpaceSize) / 3.0;
             posts(assign+1) = (((assign_pos%2)+1) * SpaceSize) / 3.0;       // alt. post at other position
@@ -446,7 +446,7 @@ double P3FitnessFunction (TVector<double> &genotype, RandomState &rs)
             int contact = 0, confuse = 0;                                   // flags to check if receiver "confuses" the posts  
             
             Receiver.SetPosition(Noise(0.0, rs));                           // reposition receiver (but do not reset)
-            for (double t = 0.0; t < SearchDuration; t += StepSize) {
+            for (double t = 0.0; t < Phase3Duration; t += StepSize) {
 
                 // sense
                 Receiver.Sense(MinDistPost(Receiver.pos, posts));
@@ -456,7 +456,7 @@ double P3FitnessFunction (TVector<double> &genotype, RandomState &rs)
                 
                 double dist = fabs(Receiver.pos - MinDistPost(Receiver.pos,posts,assign));
                 // evaluate distance to target
-                if (t > SearchDuration - EvalDuration) {
+                if (t > Phase3Duration - EvalDuration) {
                     if (dist < CloseEnough)
                         dist = CloseEnough;
                     permdist += dist;
@@ -582,12 +582,12 @@ void Results (TSearch &s)
 //---------------------------------------
 //    Vector Initialization Function
 //---------------------------------------
-// for starting searches from a given genotype
+// for starting Phase3es from a given genotype
 void InitializeVector (TVector<double> &v, RandomState &rs)
 {
     // check for vector size compatibility
     if (v.Size() != VectorSize) {
-        std::cerr << "search vector sizes do not match.\n";
+        std::cerr << "Phase3 vector sizes do not match.\n";
         return;
     }
 
@@ -633,7 +633,7 @@ int main(int argc, char *argv[])
     seedfile.close();
 
     // configure evolution
-    TSearch s(VectorSize);
+    TPhase3 s(VectorSize);
 
     s.SetRandomSeed(wseed);
     s.SetPopulationSize(PopSize);
@@ -645,7 +645,7 @@ int main(int argc, char *argv[])
     s.SetMutationVariance(MutVar);
     s.SetMaxExpectedOffspring(Expected);
     s.SetElitistFraction(Elite);
-    s.SetSearchConstraint(SearchConstraint);
+    s.SetPhase3Constraint(Phase3Constraint);
     s.SetReEvaluationFlag(ReEvalFlag);
     s.SetCheckpointInterval(500);
     s.SetPopulationVectorInterval(WritePopVectInterval);
@@ -658,22 +658,22 @@ int main(int argc, char *argv[])
     best.close(); evol.close();
 
     // Function Pointers
-    s.SetSearchTerminationFunction(TerminationFunction);
+    s.SetPhase3TerminationFunction(TerminationFunction);
     s.SetEvaluationFunction(FitnessFunction);
     // s.SetEvaluationFunction(P3FitnessFunction);
     s.SetWritePopulationVectorFunction(WritePopStat);
     s.SetPopulationStatisticsDisplayFunction(StatDisplay);
     s.SetBestActionFunction(BestFound);
-    s.SetSearchResultsDisplayFunction(Results);
+    s.SetPhase3ResultsDisplayFunction(Results);
     
     // Intialize from given vector
-    // s.InitializeSearch();
+    // s.InitializePhase3();
     // for (int i = 1; i <= s.PopulationSize(); ++i)
     //     InitializeVector(s.Individual(i),s.IndividualRandomState(i));
     
-    // Execute Search
-    s.ExecuteSearch();
-    // s.ResumeSearch();
+    // Execute Phase3
+    s.ExecutePhase3();
+    // s.ResumePhase3();
 
     if (s.BestPerformance() < 0.96)
         std::cout << "failed to acheive fitness > 0.96: " << s.BestPerformance() << "\n";
@@ -844,7 +844,7 @@ void Robust (TVector<double> &genotype, RandomState &rs)
         
         for (int p = 1; p <= perm; ++p) {
             
-            // Transient Phase
+            // Phase 1
             if (p > 2)
                 assign = 2;
             TVector<double> posts(1,3);
@@ -854,7 +854,7 @@ void Robust (TVector<double> &genotype, RandomState &rs)
                 posts(2) = posts(1) + PostSpacing;
 
             Sender.Reset(Noise(0.0, rs));
-            for (double t = 0.0; t < TransDuration; t += RobustStep) {
+            for (double t = 0.0; t < Phase1Duration; t += RobustStep) {
 
                 Sender.Sense(MinDistPost(Sender.pos, posts, assign));
                 
@@ -868,12 +868,12 @@ void Robust (TVector<double> &genotype, RandomState &rs)
                 perf(p) = 0.0; continue;
             }
 
-            // // testing for Inter2 importance after transient
+            // // testing for Inter2 importance after Phase1ient
             // Sender.NervousSystem.LesionNeuron(4);
             
-            // Communication Phase
+            // Phase 2
             Receiver.Reset(Noise(Sender.pos + HalfSpace, rs));
-            for (double t = 0.0; t < CommDuration; t += RobustStep) {
+            for (double t = 0.0; t < Phase2Duration; t += RobustStep) {
 
                 Sender.Sense(Receiver.pos);
                 Receiver.Sense(Sender.pos);
@@ -893,10 +893,10 @@ void Robust (TVector<double> &genotype, RandomState &rs)
                 perf(p) = 0.0; continue;
             }
 
-            // // testing for Inter2 importance after transient
+            // // testing for Inter2 importance after Phase 1
             // Receiver.NervousSystem.LesionNeuron(4);
 
-            // Search Phase
+            // Phase 3
             int assign_pos = (p % 2) + 1;
             posts(1) = (assign_pos * SpaceSize) / 3.0;
             posts(assign+1) = (((assign_pos%2)+1) * SpaceSize) / 3.0;
@@ -909,7 +909,7 @@ void Robust (TVector<double> &genotype, RandomState &rs)
             int contact = 0, confuse = 0;
             
             Receiver.SetPosition(Noise(0.0, rs));
-            for (double t = 0.0; t < SearchDuration; t += RobustStep) {
+            for (double t = 0.0; t < Phase3Duration; t += RobustStep) {
 
                 Receiver.Sense(MinDistPost(Receiver.pos, posts));
 
@@ -919,7 +919,7 @@ void Robust (TVector<double> &genotype, RandomState &rs)
                 // Receiver.NervousSystem.SetNeuronOutput(4,1.);
                 
                 double dist = fabs(Receiver.pos - MinDistPost(Receiver.pos,posts,assign));
-                if (t > SearchDuration - EvalDuration) {
+                if (t > Phase3Duration - EvalDuration) {
                     if (dist < CloseEnough)
                         dist = CloseEnough;
                     permdist += dist;
@@ -994,7 +994,7 @@ void FullRobust (TVector<double> &genotype, RandomState &rs)
             
             for (int p = 1; p <= perm; ++p) {
                 
-                // Transient Phase
+                // Phase 1
                 if (p > 2)
                     assign = 2;
                 TVector<double> posts(1,3);
@@ -1004,7 +1004,7 @@ void FullRobust (TVector<double> &genotype, RandomState &rs)
                     posts(2) = posts(1) + PostSpacing;
 
                 Sender.Reset(init_s*init_step);
-                for (double t = 0.0; t < TransDuration; t += RobustStep) {
+                for (double t = 0.0; t < Phase1Duration; t += RobustStep) {
                     Sender.Sense(MinDistPost(Sender.pos, posts, assign));
                     Sender.Step(RobustStep);
                 }
@@ -1012,9 +1012,9 @@ void FullRobust (TVector<double> &genotype, RandomState &rs)
                     perf(p) = 0.0; continue;
                 }
                 
-                // Communication Phase
+                // Phase 2
                 Receiver.Reset(Sender.pos + HalfSpace + init_r*init_step);
-                for (double t = 0.0; t < CommDuration; t += RobustStep) {
+                for (double t = 0.0; t < Phase2Duration; t += RobustStep) {
                     Sender.Sense(Receiver.pos);
                     Receiver.Sense(Sender.pos);
                     Sender.Step(RobustStep);
@@ -1028,7 +1028,7 @@ void FullRobust (TVector<double> &genotype, RandomState &rs)
                     perf(p) = 0.0; continue;
                 }
 
-                // Search Phase
+                // Phase 3
                 int assign_pos = (p % 2) + 1;
                 posts(1) = (assign_pos * SpaceSize) / 3.0;
                 posts(assign+1) = (((assign_pos%2)+1) * SpaceSize) / 3.0;
@@ -1040,12 +1040,12 @@ void FullRobust (TVector<double> &genotype, RandomState &rs)
                 double permdist = 0.0, permtime = 0.0;
                 int contact = 0, confuse = 0;
                 Receiver.SetPosition(0.0);
-                for (double t = 0.0; t < SearchDuration; t += RobustStep) {
+                for (double t = 0.0; t < Phase3Duration; t += RobustStep) {
                     Receiver.Sense(MinDistPost(Receiver.pos, posts));
                     Receiver.Step(RobustStep);
                     
                     double dist = fabs(Receiver.pos - MinDistPost(Receiver.pos,posts,assign));
-                    if (t > SearchDuration - EvalDuration) {
+                    if (t > Phase3Duration - EvalDuration) {
                         if (dist < CloseEnough)
                             dist = CloseEnough;
                         permdist += dist;
@@ -1110,7 +1110,7 @@ double Record (TVector<double> &genotype, RandomState &rs, int p=1)
     double perf;
     int assign = 1;
 
-    // Transient Phase
+    // Phase 1
     if (p > 2)
         assign = 2;
     TVector<double> posts(1,3);
@@ -1123,7 +1123,7 @@ double Record (TVector<double> &genotype, RandomState &rs, int p=1)
     pt << posts << "\n";
 
     Sender.Reset(0.0);
-    for (double t = 0.0; t < TransDuration; t += RecordStep) {
+    for (double t = 0.0; t < Phase1Duration; t += RecordStep) {
 
         Sender.Sense(MinDistPost(Sender.pos, posts, assign));
         
@@ -1139,9 +1139,9 @@ double Record (TVector<double> &genotype, RandomState &rs, int p=1)
     // write header
     s << "\n\n# Phase 2\n";
 
-    // Communication Phase
+    // Phase 2
     Receiver.Reset(CircleWrapFunction(Sender.pos + HalfSpace));
-    for (double t = 0.0; t < CommDuration; t += RecordStep) {
+    for (double t = 0.0; t < Phase2Duration; t += RecordStep) {
 
         Sender.Sense(Receiver.pos);
         Receiver.Sense(Sender.pos);
@@ -1161,7 +1161,7 @@ double Record (TVector<double> &genotype, RandomState &rs, int p=1)
     if (dist < CloseEnough)
         perf = 0.0;
 
-    // Search Phase
+    // Phase 3
     int assign_pos = (p % 2) + 1;
     posts(1) = (assign_pos * SpaceSize) / 3.0;
     posts(assign+1) = (((assign_pos%2)+1) * SpaceSize) / 3.0;
@@ -1178,7 +1178,7 @@ double Record (TVector<double> &genotype, RandomState &rs, int p=1)
     int contact = 0, confuse = 0;
 
     Receiver.SetPosition(0.0);
-    for (double t = 0.0; t < SearchDuration; t += RecordStep) {
+    for (double t = 0.0; t < Phase3Duration; t += RecordStep) {
 
         Receiver.Sense(MinDistPost(Receiver.pos, posts));
 
@@ -1188,7 +1188,7 @@ double Record (TVector<double> &genotype, RandomState &rs, int p=1)
         r << Receiver.StatusVector();
 
         double dist = fabs(Receiver.pos - MinDistPost(Receiver.pos,posts,assign));
-        if (t > SearchDuration - EvalDuration) {
+        if (t > Phase3Duration - EvalDuration) {
             if (dist < CloseEnough)
                 dist = CloseEnough;
             permdist += dist;
@@ -1249,7 +1249,7 @@ void P3Robust (TVector<double> &genotype, RandomState &rs)
             else if ((p-1) && (p-1) % 2 == 0)
                 assign = P_total - assign;
 
-            // Transient Phase
+            // Phase 1
             TVector<double> posts;
             posts.SetBounds(1,P_total);
             posts.FillContents(0.0);
@@ -1258,7 +1258,7 @@ void P3Robust (TVector<double> &genotype, RandomState &rs)
                 posts(i) = posts(i-1) + PostSpacing;
 
             Sender.Reset(Noise(0.0, rs));
-            for (double t = 0.0; t < TransDuration; t += RobustStep) {
+            for (double t = 0.0; t < Phase1Duration; t += RobustStep) {
 
                 Sender.Sense(MinDistPost(Sender.pos, posts, assign));
                 
@@ -1269,9 +1269,9 @@ void P3Robust (TVector<double> &genotype, RandomState &rs)
                 perf(p) = 0.0; continue;
             }
             
-            // Communication Phase
+            // Phase 2
             Receiver.Reset(Noise(Sender.pos + HalfSpace, rs));
-            for (double t = 0.0; t < CommDuration; t += RobustStep) {
+            for (double t = 0.0; t < Phase2Duration; t += RobustStep) {
 
                 Sender.Sense(Receiver.pos);
                 Receiver.Sense(Sender.pos);
@@ -1287,7 +1287,7 @@ void P3Robust (TVector<double> &genotype, RandomState &rs)
                 perf(p) = 0.0; continue;
             }
 
-            // Search Phase
+            // Phase 3
             int assign_pos = (p % 2) + 1;
             posts(1) = (assign_pos * SpaceSize) / 3.0;
             posts(assign+1) = (((assign_pos%2)+1) * SpaceSize) / 3.0;
@@ -1300,14 +1300,14 @@ void P3Robust (TVector<double> &genotype, RandomState &rs)
             int contact = 0, confuse = 0;
             
             Receiver.SetPosition(Noise(0.0, rs));
-            for (double t = 0.0; t < SearchDuration; t += RobustStep) {
+            for (double t = 0.0; t < Phase3Duration; t += RobustStep) {
 
                 Receiver.Sense(MinDistPost(Receiver.pos, posts));
 
                 Receiver.Step(RobustStep);
                 
                 double dist = fabs(Receiver.pos - MinDistPost(Receiver.pos,posts,assign));
-                if (t > SearchDuration - EvalDuration) {
+                if (t > Phase3Duration - EvalDuration) {
                     if (dist < CloseEnough)
                         dist = CloseEnough;
                     permdist += dist;
@@ -1398,7 +1398,7 @@ double P3Record (TVector<double> &genotype, RandomState &rs, int p=1)
             assign = P_total - assign;
     }
 
-    // Transient Phase
+    // Phase 1
     TVector<double> posts(1,P_total);
     posts.FillContents(0.0);
     posts(1) = HalfSpace;
@@ -1409,7 +1409,7 @@ double P3Record (TVector<double> &genotype, RandomState &rs, int p=1)
     pt << posts << "\n";
 
     Sender.Reset(0.0);
-    for (double t = 0.0; t < TransDuration; t += RecordStep) {
+    for (double t = 0.0; t < Phase1Duration; t += RecordStep) {
 
         Sender.Sense(MinDistPost(Sender.pos, posts, assign));
         
@@ -1425,9 +1425,9 @@ double P3Record (TVector<double> &genotype, RandomState &rs, int p=1)
     // write header
     s << "\n\n# Phase 2\n";
 
-    // Communication Phase
+    // Phase 2
     Receiver.Reset(CircleWrapFunction(Sender.pos + HalfSpace));
-    for (double t = 0.0; t < CommDuration; t += RecordStep) {
+    for (double t = 0.0; t < Phase2Duration; t += RecordStep) {
 
         Sender.Sense(Receiver.pos);
         Receiver.Sense(Sender.pos);
@@ -1447,7 +1447,7 @@ double P3Record (TVector<double> &genotype, RandomState &rs, int p=1)
     if (dist < CloseEnough)
         perf = 0.0;
 
-    // Search Phase
+    // Phase 3
     int assign_pos = (p % 2) + 1;
     posts(1) = (assign_pos * SpaceSize) / 3.0;
     posts(assign+1) = (((assign_pos%2)+1) * SpaceSize) / 3.0;
@@ -1464,7 +1464,7 @@ double P3Record (TVector<double> &genotype, RandomState &rs, int p=1)
     int contact = 0, confuse = 0;
 
     Receiver.SetPosition(0.0);
-    for (double t = 0.0; t < SearchDuration; t += RecordStep) {
+    for (double t = 0.0; t < Phase3Duration; t += RecordStep) {
 
         Receiver.Sense(MinDistPost(Receiver.pos, posts));
 
@@ -1474,7 +1474,7 @@ double P3Record (TVector<double> &genotype, RandomState &rs, int p=1)
         r << Receiver.StatusVector();
 
         double dist = fabs(Receiver.pos - MinDistPost(Receiver.pos,posts,assign));
-        if (t > SearchDuration - EvalDuration) {
+        if (t > Phase3Duration - EvalDuration) {
             if (dist < CloseEnough)
                 dist = CloseEnough;
             permdist += dist;
