@@ -125,13 +125,13 @@ class Data:
 
         # arrays for x-axis in time series plots
         self.Time.append(
-            np.linspace(0, self.p["TransDuration"][0], num=(int(self.p["TransDuration"][0]/self.p["StepSize"][0]))+1 )
+            np.linspace(0, self.p["Phase1Duration"][0], num=(int(self.p["Phase1Duration"][0]/self.p["StepSize"][0]))+1 )
         )
         self.Time.append(
-            np.linspace(0, self.p["CommDuration"][0], num=(int(self.p["CommDuration"][0]/self.p["StepSize"][0]))+1 )
+            np.linspace(0, self.p["Phase2Duration"][0], num=(int(self.p["Phase2Duration"][0]/self.p["StepSize"][0]))+1 )
         )
         self.Time.append(
-            np.linspace(0, self.p["SearchDuration"][0], num=(int(self.p["SearchDuration"][0]/self.p["StepSize"][0]))+1 )
+            np.linspace(0, self.p["Phase3Duration"][0], num=(int(self.p["Phase3Duration"][0]/self.p["StepSize"][0]))+1 )
         )
         
         for perm in self.Permutations:
@@ -148,33 +148,33 @@ class Data:
             TempSender = []
             TempReceiver = []
             
-            # Transient Phase Time Series
+            # Phase 1 Time Series
             TempSender.append(
                 pd.read_table(S_file,delimiter=" ",names=labels,
-                    nrows = (int(self.p["TransDuration"][0]/self.p["StepSize"][0])) + 1,
+                    nrows = (int(self.p["Phase1Duration"][0]/self.p["StepSize"][0])) + 1,
                     skiprows = 2
                 )
             )
 
-            # Communication Phase Time Series
+            # Phase 2 Time Series
             TempSender.append(
                 pd.read_table(S_file,delimiter=" ",names=labels,
-                    nrows = int(self.p["CommDuration"][0]/self.p["StepSize"][0]) + 1,
-                    skiprows = 5 + int(self.p["TransDuration"][0]/self.p["StepSize"][0])
+                    nrows = int(self.p["Phase2Duration"][0]/self.p["StepSize"][0]) + 1,
+                    skiprows = 5 + int(self.p["Phase1Duration"][0]/self.p["StepSize"][0])
                 )
             )
             TempReceiver.append(
                 pd.read_table(R_file,delimiter=" ",names=labels,
-                    nrows = (int(self.p["CommDuration"][0]/self.p["StepSize"][0])) + 1,
+                    nrows = (int(self.p["Phase2Duration"][0]/self.p["StepSize"][0])) + 1,
                     skiprows = 2
                 )
             )
 
-            # Search Phase Time Series
+            # Phase 3 Time Series
             TempReceiver.append(
                 pd.read_table(R_file,delimiter=" ",names=labels,
-                    nrows = int(self.p["SearchDuration"][0]/self.p["StepSize"][0]) + 1,
-                    skiprows = 5 + int(self.p["CommDuration"][0]/self.p["StepSize"][0])
+                    nrows = int(self.p["Phase3Duration"][0]/self.p["StepSize"][0]) + 1,
+                    skiprows = 5 + int(self.p["Phase2Duration"][0]/self.p["StepSize"][0])
                 )
             )
 
@@ -241,7 +241,7 @@ class Data:
     
     def LoadSenderActivation(self,perm,phase):
         if phase > 2:
-            raise KeyError("sender not available in search phase")
+            raise KeyError("sender not available in phase 3")
         # simplify syntax
         pidx = self.PermutationIndex(perm)
         s = self.Sender[pidx][phase-1]
@@ -256,7 +256,7 @@ class Data:
         return
     def PlotSenderActivation(self,ax,perm,phase,n=[1,2,3,4,5]):
         if phase > 2:
-            raise KeyError("sender not available in search phase")
+            raise KeyError("sender not available in phase 3")
         # simplify syntax
         pidx = self.PermutationIndex(perm)
         # load if necessary
@@ -270,7 +270,7 @@ class Data:
     
     def LoadReceiverActivation(self,perm,phase):
         if phase < 2:
-            raise KeyError("receiver not available in transient phase")
+            raise KeyError("receiver not available in phase 1")
         # simplify syntax
         pidx = self.PermutationIndex(perm)
         r = self.Receiver[pidx][phase-2]
@@ -285,7 +285,7 @@ class Data:
         return
     def PlotReceiverActivation(self,ax,perm,phase,n=[1,2,3,4,5]):
         if phase < 2:
-            raise KeyError("receiver not available in transient phase")
+            raise KeyError("receiver not available in phase 1")
         pidx = self.PermutationIndex(perm)
         # Load Lin2D objects of necessary
         if any(self.ActLines[1][pidx][phase-2] == None):
@@ -298,7 +298,7 @@ class Data:
     
     def LoadSenderSensor(self,perm,phase):
         if phase > 2:
-            raise KeyError("sender not available in search phase")
+            raise KeyError("sender not available in phase 3")
         # simplify syntax
         pidx = self.PermutationIndex(perm)
         s = self.Sender[pidx][phase-1]["Sensor"]
@@ -310,7 +310,7 @@ class Data:
         return
     def PlotSenderSensor(self,ax,perm,phase):
         if phase > 2:
-            raise KeyError("sender not available in search phase")
+            raise KeyError("sender not available in phase 3")
         pidx = self.PermutationIndex(perm)
         # Generate Line2D objects if necessary
         if self.SensLines[0][pidx][phase-1] == None:
@@ -322,7 +322,7 @@ class Data:
     
     def LoadReceiverSensor(self,perm,phase):
         if phase < 2:
-            raise KeyError("receiver not available in transient phase")
+            raise KeyError("receiver not available in phase 1")
         # simplify syntax
         pidx = self.PermutationIndex(perm)
         r = self.Receiver[pidx][phase-2]["Sensor"]
@@ -334,7 +334,7 @@ class Data:
         return
     def PlotReceiverSensor(self,ax,perm,phase):
         if phase < 2:
-            raise KeyError("receiver not available in transient phase")
+            raise KeyError("receiver not available in phase 1")
         pidx = self.PermutationIndex(perm)
         # Generate Line2D object as necessary
         if self.SensLines[1][pidx][phase-2] == None:
@@ -346,7 +346,7 @@ class Data:
     
     def LoadSenderPosition2D(self,perm,phase):
         if phase > 2:
-            raise KeyError("sender not available in search phase")
+            raise KeyError("sender not available in phase 3")
         # simplify syntax
         pidx = self.PermutationIndex(perm)
         s = self.Sender[pidx][phase-1]["Position"]
@@ -358,7 +358,7 @@ class Data:
         return
     def PlotSenderPosition2D(self,ax,perm,phase):
         if phase > 2:
-            raise KeyError("sender not available in search phase")
+            raise KeyError("sender not available in phase 3")
         pidx = self.PermutationIndex(perm)
         # Generate Line2D objects as necesary
         if self.PosLines_2D[0][pidx][phase-1] == None:
@@ -370,7 +370,7 @@ class Data:
     
     def LoadReceiverPosition2D(self,perm,phase):
         if phase < 2:
-            raise KeyError("receiver not available in transient phase")
+            raise KeyError("receiver not available in phase 1")
         # simplify syntax
         pidx = self.PermutationIndex(perm)
         r = self.Receiver[pidx][phase-2]["Position"]
@@ -382,7 +382,7 @@ class Data:
         return
     def PlotReceiverPosition2D(self,ax,perm,phase):
         if phase < 2:
-            raise KeyError("receiver not available in transient phase")
+            raise KeyError("receiver not available in phase 1")
         pidx = self.PermutationIndex(perm)
         # Generate Line2D objects if missing
         if self.PosLines_2D[1][pidx][phase-2] == None:
@@ -435,7 +435,7 @@ class Data:
     
     def LoadPosts2D(self,perm,phase):
         if phase == 2:
-            raise KeyError("no posts in communcation phase")
+            raise KeyError("no posts in phase 2")
         # simplify syntax
         pix = int(phase==3)     # flag for alt. posts
         pidx = self.PermutationIndex(perm)
@@ -460,7 +460,7 @@ class Data:
                 assign += 1
                 continue
             break
-        # load alt. posts for search phase
+        # load alt. posts for phase 3
         if (pix == 1):
             # iterate through remaining posts
             for i in range(assign, len(pst.columns)):
@@ -478,7 +478,7 @@ class Data:
         return
     def PlotPosts2D(self,ax,perm,phase):
         if phase == 2:
-            raise KeyError("no posts in communcation phase")
+            raise KeyError("no posts in phase 2")
         pix = int(phase==3)
         pidx = self.PermutationIndex(perm)
         if (self.PostLines_2D[pidx][pix] == None):
@@ -491,7 +491,7 @@ class Data:
 
     def LoadSenderPosition3D(self,perm,phase):
         if phase > 2:
-            raise KeyError("sender not available in search phase")
+            raise KeyError("sender not available in phase 3")
         # simplify syntax
         pidx = self.PermutationIndex(perm)
         # decompose position time series into 3 coordinates
@@ -504,7 +504,7 @@ class Data:
         return
     def PlotSenderPosition3D(self,ax,perm,phase):
         if phase > 2:
-            raise KeyError("sender not available in search phase")
+            raise KeyError("sender not available in phase 3")
         # simplify syntax
         t = self.Time[phase-1]
         dur = t[-1]
@@ -519,7 +519,7 @@ class Data:
     
     def LoadReceiverPosition3D(self,perm,phase):
         if phase < 2:
-            raise KeyError("receiver not available in transient phase")
+            raise KeyError("receiver not available in phase 1")
         # simplify syntax
         pidx = self.PermutationIndex(perm)
         # decompose position time series into 3 coordinates
@@ -532,7 +532,7 @@ class Data:
         return
     def PlotReceiverPosition3D(self,ax,perm,phase):
         if phase < 2:
-            raise KeyError("receiver not available in transient phase")
+            raise KeyError("receiver not available in phase 1")
         # simplify syntax
         t = self.Time[phase-1]
         dur = t[-1]
@@ -547,7 +547,7 @@ class Data:
     
     def LoadPosts3D(self,perm,phase):
         if phase == 2:
-            raise KeyError("no posts in communcation phase")
+            raise KeyError("no posts in phase 2")
         # simplify syntax
         pix = int(phase==3) # flag for Alt. posts
         pidx = self.PermutationIndex(perm)
@@ -571,7 +571,7 @@ class Data:
                 assign += 1
                 continue
             break
-        # load alt. posts for search phase
+        # load alt. posts for phase 3
         if (pix == 1):
             # iterate through remaining posts
             for i in range(assign, len(pst.columns)):
@@ -589,7 +589,7 @@ class Data:
         return
     def PlotPosts3D(self,ax,perm,phase):
         if phase == 2:
-            raise KeyError("no posts in communcation phase")
+            raise KeyError("no posts in phase 2")
         # simplify syntax
         t = self.Time[phase-1]
         dur = t[-1]
@@ -685,7 +685,7 @@ class Data:
     def Plot3D2D_Pos (self,perm,size=(20,10)):
         fig = plt.figure(figsize=size)
         
-        # 3D Transient Phase
+        # 3D Phase 1
         ax = fig.add_subplot(2,3,1,projection="3d")
         ax.set_xlim([0,self.Time[0][-1]])
         ax.set_xticks([0,self.Time[0][-1]])
@@ -698,7 +698,7 @@ class Data:
         h1, l1 = ax.get_legend_handles_labels()
         ax.set_box_aspect(aspect=[1,.4,.4])
 
-        # 3D Communication Phase
+        # 3D Phase 2
         ax = fig.add_subplot(2,3,2,projection="3d")
         ax.set_xlim([0,self.Time[1][-1]])
         ax.set_xticks([0,self.Time[1][-1]])
@@ -711,7 +711,7 @@ class Data:
         h2, l2 = ax.get_legend_handles_labels()
         ax.set_box_aspect(aspect=[1,.4,.4])
 
-        # 3D Transient Phase
+        # 3D Phase 1
         ax = fig.add_subplot(2,3,3,projection="3d")
         ax.set_xlim([0,self.Time[2][-1]])
         ax.set_xticks([0,self.Time[2][-1]])
@@ -724,7 +724,7 @@ class Data:
         h3, l3 = ax.get_legend_handles_labels()
         ax.set_box_aspect(aspect=[1,.4,.4])
 
-        # 2D Transient Phase
+        # 2D Phase 1
         ax = fig.add_subplot(2,3,4)
         ax.set_xlim([0,self.Time[0][-1]])
         ax.set_ylim([0,2*np.pi])
@@ -738,7 +738,7 @@ class Data:
         ax = self.PlotContact2D(ax,perm=perm,phase=1)
         ax.set_box_aspect(aspect=.5)
 
-        # 2D Communication Phase
+        # 2D Phase 2
         ax = fig.add_subplot(2,3,5)
         ax.set_xlim([0,self.Time[1][-1]])
         ax.set_ylim([0,2*np.pi])
@@ -751,7 +751,7 @@ class Data:
         ax = self.PlotContact2D(ax,perm=perm,phase=2)
         ax.set_box_aspect(aspect=.5)
 
-        # 2D Transient Phase
+        # 2D Phase 1
         ax = fig.add_subplot(2,3,6)
         ax.set_xlim([0,self.Time[2][-1]])
         ax.set_ylim([0,2*np.pi])
@@ -776,7 +776,7 @@ class Data:
         gs = gridspec.GridSpec(ncols=3,nrows=3, figure=fig,height_ratios=[2,1,1])
         aspect2d = .5 # aspect ratio for 2D activation plots
         
-        # 3D Transient Phase
+        # 3D Phase 1
         ax = fig.add_subplot(gs[0,0],projection="3d")
         ax.set_xlim([0,self.Time[0][-1]])
         ax.set_xticks([0,self.Time[0][-1]])
@@ -789,7 +789,7 @@ class Data:
         h1, l1 = ax.get_legend_handles_labels()
         ax.set_box_aspect(aspect=[1,.4,.4])
 
-        # 3D Communication Phase
+        # 3D Phase 2
         ax = fig.add_subplot(gs[0,1],projection="3d")
         ax.set_xlim([0,self.Time[1][-1]])
         ax.set_xticks([0,self.Time[1][-1]])
@@ -802,7 +802,7 @@ class Data:
         h2, l2 = ax.get_legend_handles_labels()
         ax.set_box_aspect(aspect=[1,.4,.4])
 
-        # 3D Transient Phase
+        # 3D Phase 1
         ax = fig.add_subplot(gs[0,2],projection="3d")
         ax.set_xlim([0,self.Time[2][-1]])
         ax.set_xticks([0,self.Time[2][-1]])
@@ -815,7 +815,7 @@ class Data:
         h3, l3 = ax.get_legend_handles_labels()
         ax.set_box_aspect(aspect=[1,.4,.4])
 
-        # 2D Transient Phase -- Sender
+        # 2D Phase 1 -- Sender
         ax = fig.add_subplot(gs[1,0])
         ax.set_xlim([0,self.Time[0][-1]])
         ax.set_ylim([-.1,1.1])
@@ -827,7 +827,7 @@ class Data:
         h4, l4 = ax.get_legend_handles_labels()
         ax.set_box_aspect(aspect=aspect2d)
 
-        # 2D Transient Phase -- Empty
+        # 2D Phase 1 -- Empty
         ax = fig.add_subplot(gs[2,0])
         ax.set_xlim([0,self.Time[0][-1]])
         ax.set_ylim([-.1,1.1])
@@ -841,7 +841,7 @@ class Data:
         ax.autoscale()
         ax.set_box_aspect(aspect=aspect2d)
 
-        # 2D Communication Phase -- Sender
+        # 2D Phase -- Sender 2
         ax = fig.add_subplot(gs[1,1])
         ax.set_xlim([0,self.Time[1][-1]])
         ax.set_ylim([-.1,1.1])
@@ -850,7 +850,7 @@ class Data:
         ax = self.PlotSenderActivation(ax,perm=perm,phase=2)
         ax.set_box_aspect(aspect=aspect2d)
 
-        # 2D Communication Phase -- Receiver
+        # 2D Phase -- Receiver 2
         ax = fig.add_subplot(gs[2,1])
         ax.set_xlim([0,self.Time[1][-1]])
         ax.set_ylim([-.1,1.1])
@@ -861,7 +861,7 @@ class Data:
         ax = self.PlotReceiverActivation(ax,perm=perm,phase=2)
         ax.set_box_aspect(aspect=aspect2d)
 
-        # 2D Communication Phase -- Empty
+        # 2D Phase -- Empty 2
         ax = fig.add_subplot(gs[1,2])
         ax.set_xlim([0,self.Time[2][-1]])
         ax.set_ylim([-.1,1.1])
@@ -869,7 +869,7 @@ class Data:
         ax.set_yticks([])
         ax.set_box_aspect(aspect=aspect2d)
 
-        # 2D Search Phase -- Receiver
+        # 2D Phase 3 -- Receiver
         ax = fig.add_subplot(gs[2,2])
         ax.set_xlim([0,self.Time[2][-1]])
         ax.set_ylim([-.1,1.1])
@@ -892,7 +892,7 @@ class Data:
         gs=gridspec.GridSpec(ncols=3,nrows=2,figure=fig,height_ratios=[3,1])
         aspect2d=.4 # aspect ratio for 2D sensor plots
         
-        # 3D Transient Phase
+        # 3D Phase 1
         ax = fig.add_subplot(gs[0,0],projection="3d")
         ax.set_xlim([0,self.Time[0][-1]])
         ax.set_xticks([0,self.Time[0][-1]])
@@ -905,7 +905,7 @@ class Data:
         h1, l1 = ax.get_legend_handles_labels()
         ax.set_box_aspect(aspect=[1,.4,.4])
 
-        # 3D Communication Phase
+        # 3D Phase 2
         ax = fig.add_subplot(gs[0,1],projection="3d")
         ax.set_xlim([0,self.Time[1][-1]])
         ax.set_xticks([0,self.Time[1][-1]])
@@ -917,7 +917,7 @@ class Data:
         ax = self.PlotContact3D(ax,perm=perm,phase=2)
         ax.set_box_aspect(aspect=[1,.4,.4])
 
-        # 3D Transient Phase
+        # 3D Phase 1
         ax = fig.add_subplot(gs[0,2],projection="3d")
         ax.set_xlim([0,self.Time[2][-1]])
         ax.set_xticks([0,self.Time[2][-1]])
@@ -930,7 +930,7 @@ class Data:
         h2, l2 = ax.get_legend_handles_labels()
         ax.set_box_aspect(aspect=[1,.4,.4])
 
-        # 2D Transient Phase
+        # 2D Phase 1
         ax = fig.add_subplot(gs[1,0])
         ax.set_xlim([0,self.Time[0][-1]])
         ax.set_xticks([0,self.Time[0][-1]])
@@ -942,7 +942,7 @@ class Data:
         ax.set_box_aspect(aspect=aspect2d)
         h3, l3 = ax.get_legend_handles_labels()
 
-        # 2D Communication Phase
+        # 2D Phase 2
         ax = fig.add_subplot(gs[1,1])
         ax.set_xlim([0,self.Time[1][-1]])
         ax.set_xticks([0,self.Time[1][-1]])
@@ -952,7 +952,7 @@ class Data:
         ax = self.PlotSenderSensor(ax,perm=perm,phase=2)
         ax.set_box_aspect(aspect=aspect2d)
 
-        # 2D Transient Phase
+        # 2D Phase 1
         ax = fig.add_subplot(gs[1,2])
         ax.set_xlim([0,self.Time[2][-1]])
         ax.set_xticks([0,self.Time[2][-1]])
