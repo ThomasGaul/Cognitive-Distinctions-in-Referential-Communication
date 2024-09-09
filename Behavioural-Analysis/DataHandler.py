@@ -1,11 +1,16 @@
 import os
+from typing import Any, List
+from matplotlib.axes import Axes
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
 from matplotlib.lines import Line2D
 from mpl_toolkits.mplot3d.art3d import Line3D
 from copy import copy
+
+from param import DataFrame
 
 # Class for visualizing a given population
 
@@ -15,16 +20,16 @@ class Data:
 #-----------------------------------------
 #   Initilization and access functions
 #-----------------------------------------
-    def __init__ (self, base, maxP, popidx, perm=[0],batchidx=0):
+    def __init__ (self, base:str, maxP:int, popidx:int, perm:List[int]=[0],batchidx:int=0):
         
         # use absolute path (more secure file reading)
         self.SetBaseDirectory(base)
         
         # Directory to specific agent
         if maxP == 2:
-            self.Directory = "./EvoP" + str(maxP) + "/Pop-" + str(popidx) + "/record"
+            self.Directory:str = "./EvoP" + str(maxP) + "/Pop-" + str(popidx) + "/record"
         if maxP == 3:
-            self.Directory = "./AllData/EvoP3_" + str(batchidx) + "/Pop-" + str(popidx) + "/record"
+            self.Directory:str = "./AllData/EvoP3_" + str(batchidx) + "/Pop-" + str(popidx) + "/record"
         os.chdir(self.Directory)
         
         # parameters of recorded data
@@ -35,55 +40,55 @@ class Data:
         os.chdir(self.Directory)
 
         # set permutation indices
-        self.P = maxP
+        self.P:int = maxP
         if (self.P == 2):
             self.MaxPosts = 4
         elif (self.P == 3):
             self.MaxPosts = 12
-        self.Permutations = []
+        self.Permutations:list[str] = []
         if (perm != None and perm[0] == 0):
-            self.SetPermutationIndices(np.arange(1,self.MaxPosts+1,1),init=True)
+            self.SetPermutationIndices(list(np.arange(1,self.MaxPosts+1,1)),init=True)
         elif (perm != None):
             self.SetPermutationIndices(perm, init=True)
 
         self.DataInitialization()
 
         # plot data for position
-        self.PosLines_2D = [np.full((len(self.Permutations),2), None),np.full((len(self.Permutations),2), None)]
-        self.PosLines_3D = [np.full((len(self.Permutations),2), None),np.full((len(self.Permutations),2), None)]
-        self.PostLines_2D = np.full((len(self.Permutations),2), None)
-        self.PostLines_3D = np.full((len(self.Permutations),2), None)
+        self.PosLines_2D:list[npt.NDArray[Any]] = [np.full((len(self.Permutations),2), None),np.full((len(self.Permutations),2), None)]
+        self.PosLines_3D:list[npt.NDArray[Any]]= [np.full((len(self.Permutations),2), None),np.full((len(self.Permutations),2), None)]
+        self.PostLines_2D:npt.NDArray[Any] = np.full((len(self.Permutations),2), None)
+        self.PostLines_3D:npt.NDArray[Any] = np.full((len(self.Permutations),2), None)
             # agent -> permutation -> phase
         
         # plot data for neuron activation
-        phase_act = [np.full(5,None),np.full(5,None)]
-        self.ActLines = [
+        phase_act:list = [np.full(5,None),np.full(5,None)]
+        self.ActLines:list = [
             np.full((len(self.Permutations),2,5), phase_act),
             np.full((len(self.Permutations),2,5), phase_act)
             ]
             # agent -> permutation -> phase -> neuron
         
         # plot data for sensors
-        self.SensLines = [np.full((len(self.Permutations),2), None),np.full((len(self.Permutations),2), None)]
+        self.SensLines:list[npt.NDArray[np.float128]] = [np.full((len(self.Permutations),2), None),np.full((len(self.Permutations),2), None)]
 
         # plot data for contact points
-        self.ContactPoints2D = np.full((len(self.Permutations),3),None)
-        self.ContactPoints3D = np.full((len(self.Permutations),3),None)
+        self.ContactPoints2D:npt.NDArray[np.float128] = np.full((len(self.Permutations),3),None)
+        self.ContactPoints3D:npt.NDArray[np.float128] = np.full((len(self.Permutations),3),None)
             # permutation -> phase
 
         os.chdir(self.BaseDirectory)
         return
     
-    def SetBaseDirectory(self,dir):
-        self.BaseDirectory = dir
+    def SetBaseDirectory(self,dir:str):
+        self.BaseDirectory:str = dir
         os.chdir(dir)
         return
 
     # permutations must be list or array
-    def SetPermutationIndices (self,permutations,init=False):
+    def SetPermutationIndices (self,permutations:List[int],init:bool=False):
         
         # clear set
-        self.Permutations = []
+        self.Permutations:list[str] = []
         # convert given set to string
         for i in permutations:
             self.Permutations.append(str(i))
@@ -94,14 +99,14 @@ class Data:
         return
     
     # converts given permutation to appropriate index
-    def PermutationIndex (self,perm):
+    def PermutationIndex (self,perm:int):
         for i in range(len(self.Permutations)):
             if (str(perm) == self.Permutations[i]):
                 return i
         else:
             raise KeyError("permutation " + str(perm) + " does not exist or has not been loaded")
     
-    def NeuronIndex (self,n):
+    def NeuronIndex (self,n:int):
         return self.Sender[0][0].columns[n+1] 
 
     def ShowFitness(self):
@@ -113,15 +118,15 @@ class Data:
         
         # basic fitness data
         if len(self.Permutations) == self.MaxPosts:
-            PF_file = "PF.dat"
-            self.FitnessVector = np.loadtxt(PF_file, dtype=float, max_rows=1)
-            self.TotalFitness = np.loadtxt(PF_file, dtype=float, skiprows=1, max_rows=1)
+            PF_file:str = "PF.dat"
+            self.FitnessVector:npt.NDArray[np.float128] = np.loadtxt(PF_file, dtype=float, max_rows=1)
+            self.TotalFitness:npt.NDArray[np.float128] = np.loadtxt(PF_file, dtype=float, skiprows=1, max_rows=1)
 
         # list containers for data of multiple permutations
-        self.Posts = []
-        self.Sender = []
-        self.Receiver = []
-        self.Time = []
+        self.Posts:list[pd.DataFrame] = []
+        self.Sender:list[list[pd.DataFrame]] = []
+        self.Receiver:list[list[pd.DataFrame]] = []
+        self.Time:list[npt.NDArray[np.float128]] = []
 
         # arrays for x-axis in time series plots
         self.Time.append(
@@ -140,13 +145,13 @@ class Data:
             P_file = "P-p" + perm + ".dat"
 
             # labels to apply to each dataframe
-            labels = pd.read_table(S_file, delimiter=" ", header=0, nrows=1).columns
+            labels:list[str] = list(pd.read_table(S_file, delimiter=" ", header=0, nrows=1).columns)
 
             # load posts per permutation
             self.Posts.append(pd.read_table(P_file,delimiter=" ",header=None, nrows=2))
 
-            TempSender = []
-            TempReceiver = []
+            TempSender:list[pd.DataFrame] = []
+            TempReceiver:list[pd.DataFrame] = []
             
             # Phase 1 Time Series
             TempSender.append(
@@ -187,17 +192,17 @@ class Data:
 
         # Best Fitness Time Series
         os.chdir(self.BaseDirectory); os.chdir(self.Directory)
-        self.EvolBest = pd.read_table("../evolbest.dat",delimiter=" ",header=0)
+        self.EvolBest:pd.DataFrame = pd.read_table("../evolbest.dat",delimiter=" ",header=0)
 
         # Population Time Series
-        self.EvolPop = pd.read_table("../evol.dat",delimiter=" ",header=None)
+        self.EvolPop:pd.DataFrame = pd.read_table("../evol.dat",delimiter=" ",header=None)
         self.EvolPop.rename(columns={0:"Generation"},inplace=True)
         self.EvolPop.drop_duplicates(subset="Generation",keep="last",inplace=True)
         self.EvolPop.reset_index(drop=True,inplace=True)
         
         # Population Average Time Series
-        self.EvolAvg = self.EvolPop["Generation"].to_frame()
-        avg = self.EvolPop.drop(columns="Generation").mean(axis=1,skipna=True)
+        self.EvolAvg:pd.DataFrame = self.EvolPop["Generation"].to_frame()
+        avg:pd.Series[float] = self.EvolPop.drop(columns="Generation").mean(axis=1,skipna=True)
         self.EvolAvg.insert(1,"Average",avg)
 
         return
@@ -239,12 +244,12 @@ class Data:
                 self.LoadContact3D(pm,3)
         return
     
-    def LoadSenderActivation(self,perm,phase):
+    def LoadSenderActivation(self,perm:int,phase:int):
         if phase > 2:
             raise KeyError("sender not available in phase 3")
         # simplify syntax
         pidx = self.PermutationIndex(perm)
-        s = self.Sender[pidx][phase-1]
+        s:pd.DataFrame = self.Sender[pidx][phase-1]
         # colors
         c_a = [[.251,.878,.816],[.351,.133,.545],[.312,.784,.471],[.941,.502,.502],[.769,.643,.518]]
         # add Line2D objects per neuron
@@ -254,7 +259,7 @@ class Data:
                 c=c_a[i], label=self.NeuronIndex(i+1)
                 )
         return
-    def PlotSenderActivation(self,ax,perm,phase,n=[1,2,3,4,5]):
+    def PlotSenderActivation(self,ax:Axes,perm:int,phase:int,n:list[int]=[1,2,3,4,5]):
         if phase > 2:
             raise KeyError("sender not available in phase 3")
         # simplify syntax
@@ -268,7 +273,7 @@ class Data:
         ax.autoscale()
         return ax
     
-    def LoadReceiverActivation(self,perm,phase):
+    def LoadReceiverActivation(self,perm:int,phase:int):
         if phase < 2:
             raise KeyError("receiver not available in phase 1")
         # simplify syntax
@@ -283,7 +288,7 @@ class Data:
                 c=c_a[i], label=self.NeuronIndex(i+1)
                 )
         return
-    def PlotReceiverActivation(self,ax,perm,phase,n=[1,2,3,4,5]):
+    def PlotReceiverActivation(self,ax:Axes,perm:int,phase:int,n=[1,2,3,4,5]):
         if phase < 2:
             raise KeyError("receiver not available in phase 1")
         pidx = self.PermutationIndex(perm)
@@ -296,7 +301,7 @@ class Data:
         ax.autoscale()
         return ax
     
-    def LoadSenderSensor(self,perm,phase):
+    def LoadSenderSensor(self,perm:int,phase:int):
         if phase > 2:
             raise KeyError("sender not available in phase 3")
         # simplify syntax
@@ -308,7 +313,7 @@ class Data:
             c=[1,0,0], label="Sensor"
             )
         return
-    def PlotSenderSensor(self,ax,perm,phase):
+    def PlotSenderSensor(self,ax:Axes,perm:int,phase:int):
         if phase > 2:
             raise KeyError("sender not available in phase 3")
         pidx = self.PermutationIndex(perm)
@@ -320,7 +325,7 @@ class Data:
         ax.autoscale()
         return ax
     
-    def LoadReceiverSensor(self,perm,phase):
+    def LoadReceiverSensor(self,perm:int,phase:int):
         if phase < 2:
             raise KeyError("receiver not available in phase 1")
         # simplify syntax
@@ -332,7 +337,7 @@ class Data:
             c=[1,0,0], label="Sensor"
             )
         return
-    def PlotReceiverSensor(self,ax,perm,phase):
+    def PlotReceiverSensor(self,ax:Axes,perm:int,phase:int):
         if phase < 2:
             raise KeyError("receiver not available in phase 1")
         pidx = self.PermutationIndex(perm)
@@ -344,7 +349,7 @@ class Data:
         ax.autoscale()
         return ax
     
-    def LoadSenderPosition2D(self,perm,phase):
+    def LoadSenderPosition2D(self,perm:int,phase:int):
         if phase > 2:
             raise KeyError("sender not available in phase 3")
         # simplify syntax
@@ -356,7 +361,7 @@ class Data:
             c=[0,0,1], label="Sender"
             )
         return
-    def PlotSenderPosition2D(self,ax,perm,phase):
+    def PlotSenderPosition2D(self,ax:Axes,perm:int,phase:int):
         if phase > 2:
             raise KeyError("sender not available in phase 3")
         pidx = self.PermutationIndex(perm)
@@ -368,7 +373,7 @@ class Data:
         ax.autoscale()
         return ax
     
-    def LoadReceiverPosition2D(self,perm,phase):
+    def LoadReceiverPosition2D(self,perm:int,phase:int):
         if phase < 2:
             raise KeyError("receiver not available in phase 1")
         # simplify syntax
@@ -380,7 +385,7 @@ class Data:
             c=[1,.418,.706], label="Receiver"
             )
         return
-    def PlotReceiverPosition2D(self,ax,perm,phase):
+    def PlotReceiverPosition2D(self,ax:Axes,perm:int,phase:int):
         if phase < 2:
             raise KeyError("receiver not available in phase 1")
         pidx = self.PermutationIndex(perm)
@@ -392,7 +397,7 @@ class Data:
         ax.autoscale()
         return ax
 
-    def LoadContact2D(self,perm,phase):
+    def LoadContact2D(self,perm:int,phase:int):
         # simplify syntax
         pidx = self.PermutationIndex(perm)
         t = self.Time[phase-1]
@@ -400,10 +405,10 @@ class Data:
         if phase < 3: a = self.Sender[pidx][phase-1]
         else: a = self.Receiver[pidx][phase-2]
         # Lists to store contact points
-        touch_t = []
-        touch_pos = []
+        touch_t:list[pd.Series] = []
+        touch_pos:list[float] = []
         # redundancy flag
-        flag = 0
+        flag:int = 0
         # search through sensor time series
         for i in range(len(t)):
             # append contact point if sensor threshold met
@@ -423,7 +428,7 @@ class Data:
             label="Contact"
             )
         return
-    def PlotContact2D(self,ax,perm,phase):
+    def PlotContact2D(self,ax:Axes,perm:int,phase:int):
         pidx = self.PermutationIndex(perm)
         # Generate Line2D objects as necessary
         if self.ContactPoints2D[pidx][phase-1] == None:
@@ -433,7 +438,7 @@ class Data:
         ax.autoscale()
         return ax
     
-    def LoadPosts2D(self,perm,phase):
+    def LoadPosts2D(self,perm:int,phase:int):
         if phase == 2:
             raise KeyError("no posts in phase 2")
         # simplify syntax
@@ -443,19 +448,19 @@ class Data:
         dur = t[-1]
         pst = self.Posts[pidx]
         # list of line objects per post
-        lines = []
+        lines:list[Line2D] = []
         # track target posts
-        assign = 1
+        assign:int = 1
         # iterate through posts
         for i in range(len(pst.columns)):
             # label target post
             if (i == 0):
-                pos = np.full(int((dur/self.p["StepSize"][0])+1),pst[i][pix])
+                pos:npt.NDArray[np.float128] = np.full(int((dur/self.p["StepSize"][0])+1),pst[i][pix])
                 lines.append(Line2D(t,pos,c=[1,.75,.275],linestyle="--",label="Target"))
                 continue
             # add nearest posts as target
             elif (abs(pst[i-1][pix] - pst[i][pix]) < self.p["BodySize"][0]*3):
-                pos = np.full(int((dur/self.p["StepSize"][0])+1),pst[i][pix])
+                pos:npt.NDArray[np.float128] = np.full(int((dur/self.p["StepSize"][0])+1),pst[i][pix])
                 lines.append(Line2D(t,pos,c=[1,.75,.275],linestyle="--"))
                 assign += 1
                 continue
@@ -464,7 +469,7 @@ class Data:
         if (pix == 1):
             # iterate through remaining posts
             for i in range(assign, len(pst.columns)):
-                pos = np.full(int((dur/self.p["StepSize"][0])+1),pst[i][pix])
+                pos:npt.NDArray[np.float128] = np.full(int((dur/self.p["StepSize"][0])+1),pst[i][pix])
                 # label first Alt. post
                 if (i == assign):
                     lines.append(Line2D(t,pos,c=[.035,.475,.412],linestyle="--",label="Alt."))
@@ -476,20 +481,20 @@ class Data:
         # add list to object
         self.PostLines_2D[pidx][pix] = lines
         return
-    def PlotPosts2D(self,ax,perm,phase):
+    def PlotPosts2D(self,ax:Axes,perm:int,phase:int):
         if phase == 2:
             raise KeyError("no posts in phase 2")
         pix = int(phase==3)
         pidx = self.PermutationIndex(perm)
         if (self.PostLines_2D[pidx][pix] == None):
             self.LoadPosts2D(perm,phase)
-        lines = self.PostLines_2D[pidx][pix]
+        lines:list[Line2D] = self.PostLines_2D[pidx][pix]
         for l in lines:
             ax.add_line(copy(l))
         ax.autoscale()
         return ax
 
-    def LoadSenderPosition3D(self,perm,phase):
+    def LoadSenderPosition3D(self,perm:int,phase:int):
         if phase > 2:
             raise KeyError("sender not available in phase 3")
         # simplify syntax
@@ -502,13 +507,13 @@ class Data:
             c=[0,0,1], label="Sender", linestyle="-",linewidth=2
             )
         return
-    def PlotSenderPosition3D(self,ax,perm,phase):
+    def PlotSenderPosition3D(self,ax:Axes,perm:int,phase:int):
         if phase > 2:
             raise KeyError("sender not available in phase 3")
         # simplify syntax
         t = self.Time[phase-1]
-        dur = t[-1]
-        ax.set_xlim([0,dur])
+        dur:float = float(t[-1])
+        ax.set_xlim((float(0),dur))
         pidx = self.PermutationIndex(perm)
         # Generate Line3D plots if necessary
         if self.PosLines_3D[0][pidx][phase-1] == None:
@@ -517,7 +522,7 @@ class Data:
         ax.add_line(copy(self.PosLines_3D[0][pidx][phase-1]))
         return ax
     
-    def LoadReceiverPosition3D(self,perm,phase):
+    def LoadReceiverPosition3D(self,perm:int,phase:int):
         if phase < 2:
             raise KeyError("receiver not available in phase 1")
         # simplify syntax
@@ -530,13 +535,13 @@ class Data:
             c=[1,.418,.706], label="Receiver", linestyle="-",linewidth=2
             )
         return
-    def PlotReceiverPosition3D(self,ax,perm,phase):
+    def PlotReceiverPosition3D(self,ax:Axes,perm:int,phase:int):
         if phase < 2:
             raise KeyError("receiver not available in phase 1")
         # simplify syntax
         t = self.Time[phase-1]
-        dur = t[-1]
-        ax.set_xlim([0,dur])
+        dur:float = float(t[-1])
+        ax.set_xlim((0,dur))
         pidx = self.PermutationIndex(perm)
         # Generate Line3D plots if necessary
         if self.PosLines_3D[1][pidx][phase-2] == None:
@@ -545,7 +550,7 @@ class Data:
         ax.add_line(copy(self.PosLines_3D[1][pidx][phase-2]))
         return ax
     
-    def LoadPosts3D(self,perm,phase):
+    def LoadPosts3D(self,perm:int,phase:int):
         if phase == 2:
             raise KeyError("no posts in phase 2")
         # simplify syntax
@@ -554,19 +559,19 @@ class Data:
         t = self.Time[phase-1]
         pst = self.Posts[pidx]
         # list of line objects per post
-        lines = []
+        lines:list[Line2D] = []
         # track target posts
-        assign = 1
+        assign:int = 1
         # iterate through posts
         for i in range(len(pst.columns)):
             # label first target post
             if (i == 0):
-                pos = XSinCos(t,pst[i][pix])
+                pos = XSinCosPost(t,pst[i][pix])
                 lines.append(Line3D(pos[0],pos[1],pos[2],c=[1,.75,.275],linestyle="--",linewidth=2,label="Target"))
                 continue
             # add nearest posts as target
             elif (abs(pst[i-1][pix] - pst[i][pix]) < self.p["BodySize"][0]*3):
-                pos = XSinCos(t,pst[i][pix])
+                pos = XSinCosPost(t,pst[i][pix])
                 lines.append(Line3D(pos[0],pos[1],pos[2],c=[1,.75,.275],linestyle="--",linewidth=2))
                 assign += 1
                 continue
@@ -575,7 +580,7 @@ class Data:
         if (pix == 1):
             # iterate through remaining posts
             for i in range(assign, len(pst.columns)):
-                pos = XSinCos(t,pst[i][pix])
+                pos = XSinCosPost(t,pst[i][pix])
                 # label first Alt. post
                 if (i == assign):
                     lines.append(Line3D(pos[0],pos[1],pos[2],c=[.035,.475,.412],linestyle="--",linewidth=2,label="Alt."))
@@ -587,25 +592,25 @@ class Data:
         # add Line3D list to object
         self.PostLines_3D[pidx][pix] = lines
         return
-    def PlotPosts3D(self,ax,perm,phase):
+    def PlotPosts3D(self,ax:Axes,perm:int,phase:int):
         if phase == 2:
             raise KeyError("no posts in phase 2")
         # simplify syntax
         t = self.Time[phase-1]
-        dur = t[-1]
-        ax.set_xlim([0,dur])
+        dur:float = float(t[-1])
+        ax.set_xlim((0,dur))
         pix = int(phase==3)
         pidx = self.PermutationIndex(perm)
         # Generate Line3D object if necessary
         if (self.PostLines_3D[pidx][pix] == None):
             self.LoadPosts3D(perm,phase)
         # add Line3D copies to Axes
-        lines = self.PostLines_3D[pidx][pix]
+        lines:list[Line2D] = self.PostLines_3D[pidx][pix]
         for l in lines:
             ax.add_line(copy(l))
         return ax
       
-    def LoadContact3D(self,perm,phase):
+    def LoadContact3D(self,perm:int,phase:int):
         # simplify snytax
         pidx = self.PermutationIndex(perm)
         t = self.Time[phase-1]
@@ -613,9 +618,9 @@ class Data:
         if phase < 3: a = self.Sender[pidx][phase-1]
         else: a = self.Receiver[pidx][phase-2]
         # store contact points per coordinate
-        touch_x = []
-        touch_y = []
-        touch_z = []
+        touch_x:list[np.float128] = []
+        touch_y:list[np.float128] = []
+        touch_z:list[np.float128] = []
         # redundancy flag
         flag = 0
         # search through sensor time series
@@ -639,7 +644,7 @@ class Data:
             label="Contact"
         )
         return
-    def PlotContact3D(self,ax,perm,phase):
+    def PlotContact3D(self,ax:Axes,perm:int,phase:int):
         # simplify snytax
         pidx = self.PermutationIndex(perm)
         # Generate Line3D objects if necessary
@@ -649,10 +654,10 @@ class Data:
         ax.add_line(copy(self.ContactPoints3D[pidx][phase-1]))
         return ax
      
-    def PlotScaffold(self,ax,n=2,lyz=False,lx=True):
+    def PlotScaffold(self,ax:Axes,n:int=2,lyz=False,lx=True):
         # circle on y-z plane
-        cy = np.cos(np.linspace(0,2*np.pi,num=100))
-        cz = np.sin(np.linspace(0,2*np.pi,num=100))
+        cy:npt.NDArray[np.float128] = np.cos(np.linspace(0,2*np.pi,num=100))
+        cz:npt.NDArray[np.float128] = np.sin(np.linspace(0,2*np.pi,num=100))
         # fill plot with circles
         for i in range(n):
             cx = i * (ax.get_xlim()[1] / (n-1))
@@ -682,12 +687,12 @@ class Data:
 #-------------------------------------------
 #          Preset Plotting Functions
 #-------------------------------------------
-    def Plot3D2D_Pos (self,perm,size=(20,10)):
+    def Plot3D2D_Pos (self,perm:int,size=(20,10)):
         fig = plt.figure(figsize=size)
         
         # 3D Phase 1
         ax = fig.add_subplot(2,3,1,projection="3d")
-        ax.set_xlim([0,self.Time[0][-1]])
+        ax.set_xlim((0,self.Time[0][-1]))
         ax.set_xticks([0,self.Time[0][-1]])
         ax.tick_params(labelsize=16)
         ax = ClearGrid(ax)
@@ -696,11 +701,12 @@ class Data:
         ax = self.PlotScaffold(ax,n=30)
         ax = self.PlotContact3D(ax,perm=perm,phase=1)
         h1, l1 = ax.get_legend_handles_labels()
-        ax.set_box_aspect(aspect=[1,.4,.4])
+        # this works, but python 3.12.4 cintellisense complains
+        ax.set_box_aspect(aspect=[1.,.4,.4])
 
         # 3D Phase 2
         ax = fig.add_subplot(2,3,2,projection="3d")
-        ax.set_xlim([0,self.Time[1][-1]])
+        ax.set_xlim((0,self.Time[1][-1]))
         ax.set_xticks([0,self.Time[1][-1]])
         ax.tick_params(labelsize=16)
         ax = ClearGrid(ax)
@@ -713,7 +719,7 @@ class Data:
 
         # 3D Phase 1
         ax = fig.add_subplot(2,3,3,projection="3d")
-        ax.set_xlim([0,self.Time[2][-1]])
+        ax.set_xlim((0,self.Time[2][-1]))
         ax.set_xticks([0,self.Time[2][-1]])
         ax.tick_params(labelsize=16)
         ax = ClearGrid(ax)
@@ -726,8 +732,8 @@ class Data:
 
         # 2D Phase 1
         ax = fig.add_subplot(2,3,4)
-        ax.set_xlim([0,self.Time[0][-1]])
-        ax.set_ylim([0,2*np.pi])
+        ax.set_xlim((0,self.Time[0][-1]))
+        ax.set_ylim((0,2*np.pi))
         ax.set_xticks([0,self.Time[0][-1]])
         ax.set_yticks([0,614])
         ax.tick_params(labelsize=16)
@@ -740,8 +746,8 @@ class Data:
 
         # 2D Phase 2
         ax = fig.add_subplot(2,3,5)
-        ax.set_xlim([0,self.Time[1][-1]])
-        ax.set_ylim([0,2*np.pi])
+        ax.set_xlim((0,self.Time[1][-1]))
+        ax.set_ylim((0,2*np.pi))
         ax.set_xticks([0,self.Time[1][-1]])
         ax.set_yticks([])
         ax.tick_params(labelsize=16)
@@ -753,8 +759,8 @@ class Data:
 
         # 2D Phase 1
         ax = fig.add_subplot(2,3,6)
-        ax.set_xlim([0,self.Time[2][-1]])
-        ax.set_ylim([0,2*np.pi])
+        ax.set_xlim((0,self.Time[2][-1]))
+        ax.set_ylim((0,2*np.pi))
         ax.set_xticks([0,self.Time[2][-1]])
         ax.set_yticks([])
         ax.tick_params(labelsize=16)
@@ -778,7 +784,7 @@ class Data:
         
         # 3D Phase 1
         ax = fig.add_subplot(gs[0,0],projection="3d")
-        ax.set_xlim([0,self.Time[0][-1]])
+        ax.set_xlim((0,self.Time[0][-1]))
         ax.set_xticks([0,self.Time[0][-1]])
         ax.tick_params(labelsize=16)
         ax = ClearGrid(ax)
@@ -791,7 +797,7 @@ class Data:
 
         # 3D Phase 2
         ax = fig.add_subplot(gs[0,1],projection="3d")
-        ax.set_xlim([0,self.Time[1][-1]])
+        ax.set_xlim((0,self.Time[1][-1]))
         ax.set_xticks([0,self.Time[1][-1]])
         ax.tick_params(labelsize=16)
         ax = ClearGrid(ax)
@@ -804,7 +810,7 @@ class Data:
 
         # 3D Phase 1
         ax = fig.add_subplot(gs[0,2],projection="3d")
-        ax.set_xlim([0,self.Time[2][-1]])
+        ax.set_xlim((0,self.Time[2][-1]))
         ax.set_xticks([0,self.Time[2][-1]])
         ax.tick_params(labelsize=16)
         ax = ClearGrid(ax)
@@ -817,8 +823,8 @@ class Data:
 
         # 2D Phase 1 -- Sender
         ax = fig.add_subplot(gs[1,0])
-        ax.set_xlim([0,self.Time[0][-1]])
-        ax.set_ylim([-.1,1.1])
+        ax.set_xlim((0,self.Time[0][-1]))
+        ax.set_ylim((-.1,1.1))
         ax.set_xticks([])
         ax.set_yticks([0,1])
         ax.tick_params(labelsize=16)
@@ -829,8 +835,8 @@ class Data:
 
         # 2D Phase 1 -- Empty
         ax = fig.add_subplot(gs[2,0])
-        ax.set_xlim([0,self.Time[0][-1]])
-        ax.set_ylim([-.1,1.1])
+        ax.set_xlim((0,self.Time[0][-1]))
+        ax.set_ylim((-.1,1.1))
         ax.set_xticks([0,self.Time[0][-1]])
         ax.set_yticks([0,1])
         ax.tick_params(labelsize=16)
@@ -843,8 +849,8 @@ class Data:
 
         # 2D Phase -- Sender 2
         ax = fig.add_subplot(gs[1,1])
-        ax.set_xlim([0,self.Time[1][-1]])
-        ax.set_ylim([-.1,1.1])
+        ax.set_xlim((0,self.Time[1][-1]))
+        ax.set_ylim((-.1,1.1))
         ax.set_xticks([])
         ax.set_yticks([])
         ax = self.PlotSenderActivation(ax,perm=perm,phase=2)
@@ -852,8 +858,8 @@ class Data:
 
         # 2D Phase -- Receiver 2
         ax = fig.add_subplot(gs[2,1])
-        ax.set_xlim([0,self.Time[1][-1]])
-        ax.set_ylim([-.1,1.1])
+        ax.set_xlim((0,self.Time[1][-1]))
+        ax.set_ylim((-.1,1.1))
         ax.set_xticks([0,self.Time[1][-1]])
         ax.set_yticks([])
         ax.tick_params(labelsize=16)
@@ -863,16 +869,16 @@ class Data:
 
         # 2D Phase -- Empty 2
         ax = fig.add_subplot(gs[1,2])
-        ax.set_xlim([0,self.Time[2][-1]])
-        ax.set_ylim([-.1,1.1])
+        ax.set_xlim((0,self.Time[2][-1]))
+        ax.set_ylim((-.1,1.1))
         ax.set_xticks([])
         ax.set_yticks([])
         ax.set_box_aspect(aspect=aspect2d)
 
         # 2D Phase 3 -- Receiver
         ax = fig.add_subplot(gs[2,2])
-        ax.set_xlim([0,self.Time[2][-1]])
-        ax.set_ylim([-.1,1.1])
+        ax.set_xlim((0,self.Time[2][-1]))
+        ax.set_ylim((-.1,1.1))
         ax.set_xticks([0,self.Time[2][-1]])
         ax.set_yticks([])
         ax.tick_params(labelsize=16)
@@ -894,7 +900,7 @@ class Data:
         
         # 3D Phase 1
         ax = fig.add_subplot(gs[0,0],projection="3d")
-        ax.set_xlim([0,self.Time[0][-1]])
+        ax.set_xlim((0,self.Time[0][-1]))
         ax.set_xticks([0,self.Time[0][-1]])
         ax.tick_params(labelsize=16)
         ax = ClearGrid(ax)
@@ -907,7 +913,7 @@ class Data:
 
         # 3D Phase 2
         ax = fig.add_subplot(gs[0,1],projection="3d")
-        ax.set_xlim([0,self.Time[1][-1]])
+        ax.set_xlim((0,self.Time[1][-1]))
         ax.set_xticks([0,self.Time[1][-1]])
         ax.tick_params(labelsize=16)
         ax = ClearGrid(ax)
@@ -919,7 +925,7 @@ class Data:
 
         # 3D Phase 1
         ax = fig.add_subplot(gs[0,2],projection="3d")
-        ax.set_xlim([0,self.Time[2][-1]])
+        ax.set_xlim((0,self.Time[2][-1]))
         ax.set_xticks([0,self.Time[2][-1]])
         ax.tick_params(labelsize=16)
         ax = ClearGrid(ax)
@@ -932,7 +938,7 @@ class Data:
 
         # 2D Phase 1
         ax = fig.add_subplot(gs[1,0])
-        ax.set_xlim([0,self.Time[0][-1]])
+        ax.set_xlim((0,self.Time[0][-1]))
         ax.set_xticks([0,self.Time[0][-1]])
         ax.set_yticks([])
         ax.tick_params(labelsize=16)
@@ -944,7 +950,7 @@ class Data:
 
         # 2D Phase 2
         ax = fig.add_subplot(gs[1,1])
-        ax.set_xlim([0,self.Time[1][-1]])
+        ax.set_xlim((0,self.Time[1][-1]))
         ax.set_xticks([0,self.Time[1][-1]])
         ax.set_yticks([])
         ax.tick_params(labelsize=16)
@@ -954,7 +960,7 @@ class Data:
 
         # 2D Phase 1
         ax = fig.add_subplot(gs[1,2])
-        ax.set_xlim([0,self.Time[2][-1]])
+        ax.set_xlim((0,self.Time[2][-1]))
         ax.set_xticks([0,self.Time[2][-1]])
         ax.set_yticks([])
         ax.tick_params(labelsize=16)
@@ -995,8 +1001,8 @@ class Data:
 #---------------------------
 # cleans 3D plots
 def ClearGrid(ax):
-    ax.set_ylim([-1,1])
-    ax.set_zlim([-1,1])
+    ax.set_ylim((-1,1))
+    ax.set_zlim((-1,1))
     ax.set_yticks([])
     ax.set_zticks([])
     ax.xaxis.pane.set_facecolor(".75")
@@ -1005,11 +1011,13 @@ def ClearGrid(ax):
     return ax
 
 # converts 2D points/arrays to 3D coordinates
+def XSinCosPost(x,pos):
+    cos = np.cos(np.full(len(x),pos) / 100)
+    sin = np.sin(np.full(len(x),pos) / 100)
+    return [x, cos, sin]
+
+
 def XSinCos(x,pos):
-    if type(pos) == np.float64:
-        cos = np.cos(np.full(len(x),pos) / 100)
-        sin = np.sin(np.full(len(x),pos) / 100)
-    else:
-        cos = np.cos(pos / 100)
-        sin = np.sin(pos / 100)
+    cos = np.cos(pos / 100)
+    sin = np.sin(pos / 100)
     return [x, cos, sin]

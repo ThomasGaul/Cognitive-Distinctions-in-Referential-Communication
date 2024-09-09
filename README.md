@@ -8,4 +8,12 @@ The environment is a one-dimensional ring with 'post-sets' that agents can inter
 2. *Phase 2*. The sender interacts with the receiver to prepare the latter to find the correct post-set.
 3. *Phase 3*. The receiver finds and stays near the target post-set, ignoring the distraction post-set.
 
-For data, please contact me at tgaul@iu.edu. Please also reach out for any questions or concerns.
+For the rest of the data, please contact me at [tgaul@iu.edu](mailto:tgaul@iu.edu). Please also reach out for any questions or concerns. 
+
+### Software Used
+| Software  | Version   |
+| --------- | --------- |
+| gcc       | 12.2.0    |
+| pthon     | 3.12.4    |
+| Wolfram   | 14.1.0    |
+| OS        | Debian 12.2.0-14 (*Bookworm*) |
