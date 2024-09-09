@@ -14,6 +14,6 @@ For the rest of the data, please contact me at [tgaul@iu.edu](mailto:tgaul@iu.ed
 | Software  | Version   |
 | --------- | --------- |
 | gcc       | 12.2.0    |
-| pthon     | 3.12.4    |
+| python     | 3.12.4    |
 | Wolfram   | 14.1.0    |
 | OS        | Debian 12.2.0-14 (*Bookworm*) |
