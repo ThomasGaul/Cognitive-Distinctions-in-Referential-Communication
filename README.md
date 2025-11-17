@@ -1,4 +1,6 @@
- # Cognitive Distinctions in a Model of Referential Communciation
+*This repository is out of date. View the [gitlab repository](https://gitlab.com/tgaul/referential-communication) instead.*
+---
+# Cognitive Distinctions in a Model of Referential Communciation
 
 This is a minimal model of referential communication used to explore the concept of cognitive distinctions. This repository contains the code for the evolution and analysis of agents in a referential communication task. The work has been under review for publication in the *Artificial Life* journal since October 2023. A preprint is available on [my website](https://thomasgaul.github.io/publication/2024-ReferComm).
 
